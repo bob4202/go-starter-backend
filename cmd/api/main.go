@@ -1,8 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"go-starter-backend/internal/config"
+)
 
 func main() {
-	fmt.Println("Hello")
 
+	cfg := config.Load()
+
+	fmt.Println("Db something ", cfg.DBSSLMode)
 }
