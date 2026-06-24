@@ -105,7 +105,14 @@ func (h *Handler) ChangePassword(c *gin.Context) {
 		response.BadRequest(c, "invalid request body")
 	}
 
-	err := h.service.ChangePassword(req.ID, req.Password)
+	userID := c.GetString("user_id")
+
+	user, err := h.service.Me(userID)
+
+	if err != nil {
+		response.Error(c, http.StatusUnauthorized, "user not found")
+	}
+	err = h.service.ChangePassword(user.ID, req.Password)
 
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
