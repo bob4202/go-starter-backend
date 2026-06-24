@@ -2,6 +2,7 @@ package server
 
 import (
 	"go-starter-backend/internal/config"
+	"go-starter-backend/internal/middleware"
 	"go-starter-backend/internal/user"
 	"go-starter-backend/pkg/response"
 
@@ -31,7 +32,7 @@ func (s *Server) Routes() *gin.Engine {
 	userHandler := user.NewHandler(userService)
 
 	api := router.Group("/api/v1")
-	user.RegisterRoutes(api, userHandler)
+	user.RegisterRoutes(api, userHandler, middleware.Auth(s.cfg))
 
 	return router
 }
