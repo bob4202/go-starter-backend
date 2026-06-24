@@ -17,6 +17,11 @@ func NewHandler(service *Service) *Handler {
 	}
 }
 
+type PublicUserResponse struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
 type RegisterRequest struct {
 	Name     string `json:"name" binding:"required"`
 	Email    string `json:"email" binding:"required"`
@@ -123,7 +128,13 @@ func (h *Handler) GetUserById(c *gin.Context) {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 	}
 
-	response.Success(c, http.StatusAccepted, "success", user)
+	res := PublicUserResponse{
+		ID:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
+	}
+
+	response.Success(c, http.StatusAccepted, "success", res)
 }
 
 func (h *Handler) GetUserByEmail(c *gin.Context) {
@@ -139,5 +150,11 @@ func (h *Handler) GetUserByEmail(c *gin.Context) {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 	}
 
-	response.Success(c, http.StatusAccepted, "success", user)
+	res := PublicUserResponse{
+		ID:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
+	}
+
+	response.Success(c, http.StatusAccepted, "success", res)
 }
