@@ -8,4 +8,5 @@ func RegisterRoutes(router *gin.RouterGroup, handler *Handler) {
 	users.POST("/register", handler.Register)
 	users.GET("/email", handler.GetUserByEmail)
 	users.GET("/:id", handler.GetUserById)
+	users.POST("/login", handler.Login)
 }

@@ -2,17 +2,21 @@ package user
 
 import (
 	"errors"
+	"go-starter-backend/internal/config"
+	jwtPkg "go-starter-backend/pkg/jwt"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Service struct {
 	repo *Repository
+	cfg  *config.Config
 }
 
-func NewService(repo *Repository) *Service {
+func NewService(repo *Repository, cfg *config.Config) *Service {
 	return &Service{
 		repo: repo,
+		cfg:  cfg,
 	}
 }
 
@@ -26,6 +30,7 @@ var (
 	ErrorChangingPassword   UserErrors = "error changing password"
 	ErrorDeletingUser       UserErrors = "error deleting user"
 	ErrorInvalidCredentials UserErrors = "invalid credentials"
+	ErrorGeneratingJWT      UserErrors = "error generating jwt token"
 )
 
 func (s *Service) Register(name, email, password string) (*User, error) {
@@ -126,12 +131,27 @@ func (s *Service) Login(email, password string) (string, error) {
 		return "", errors.New(string(ErrorUserNotFound))
 	}
 
-	ok := CheckPassword(password, user.PasswordHash)
-
-	if !ok {
+	if !CheckPassword(password, user.PasswordHash) {
 		return "", errors.New(string(ErrorInvalidCredentials))
 	}
 
+	token, err := jwtPkg.GenerateToken(user.ID, s.cfg.JWTSecret)
+
+	if err != nil {
+		return "", errors.New(string(ErrorGeneratingJWT))
+	}
+
+	return token, nil
+
+}
+
+func (s *Service) Me(userID string) (*User, error) {
+	user, err := s.repo.FindById(userID)
+	if err != nil {
+		return nil, errors.New(string(ErrorUserNotFound))
+	}
+
+	return user, nil
 }
 
 ///////// Helper Functions ///////////

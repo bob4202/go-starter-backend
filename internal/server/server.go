@@ -27,7 +27,7 @@ func (s *Server) Routes() *gin.Engine {
 	router.GET("/health", s.health)
 
 	userRepo := user.NewRepository(s.db)
-	userService := user.NewService(userRepo)
+	userService := user.NewService(userRepo, s.cfg)
 	userHandler := user.NewHandler(userService)
 
 	api := router.Group("/api/v1")

@@ -3,6 +3,7 @@ package user
 import (
 	"go-starter-backend/pkg/response"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,10 +23,17 @@ type PublicUserResponse struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
 }
+
+type PrivateUserResponse struct {
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"created_at"`
+}
 type RegisterRequest struct {
 	Name     string `json:"name" binding:"required"`
 	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required, min=6"`
+	Password string `json:"password" binding:"required,min=6"`
 }
 
 type UpdateRequest struct {
@@ -49,6 +57,14 @@ type GetUserByIDRequest struct {
 
 type GetUserByEmailRequest struct {
 	Email string `json:"email" binding:"required"`
+}
+
+type LoginRequest struct {
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+type LoginResponse struct {
+	Token string `json:"token"`
 }
 
 func (h *Handler) Register(c *gin.Context) {
@@ -157,4 +173,41 @@ func (h *Handler) GetUserByEmail(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusAccepted, "success", res)
+}
+func (h *Handler) Me(c *gin.Context) {
+	userID := c.GetString("user_id")
+
+	user, err := h.service.Me(userID)
+
+	if err != nil {
+		response.Error(c, http.StatusUnauthorized, "user not found")
+	}
+	res := PrivateUserResponse{
+		ID:        user.ID,
+		Name:      user.Name,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt,
+	}
+
+	response.Success(c, http.StatusAccepted, "success", res)
+
+}
+func (h *Handler) Login(c *gin.Context) {
+
+	var req LoginRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "invalid request body")
+	}
+
+	token, err := h.service.Login(req.Email, req.Password)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, err.Error())
+	}
+
+	res := LoginResponse{
+		Token: token,
+	}
+
+	response.Success(c, http.StatusAccepted, "login successful", res)
 }
