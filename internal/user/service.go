@@ -19,12 +19,13 @@ func NewService(repo *Repository) *Service {
 type UserErrors string
 
 var (
-	UserAlreadyExists     UserErrors = "user already exists"
-	ErrorHashingPassword  UserErrors = "error generating hash"
-	ErrorCreatingUser     UserErrors = "error creating user"
-	ErrorUserNotFound     UserErrors = "error user not found"
-	ErrorChangingPassword UserErrors = "error changing password"
-	ErrorDeletingUser     UserErrors = "error deleting user"
+	UserAlreadyExists       UserErrors = "user already exists"
+	ErrorHashingPassword    UserErrors = "error generating hash"
+	ErrorCreatingUser       UserErrors = "error creating user"
+	ErrorUserNotFound       UserErrors = "error user not found"
+	ErrorChangingPassword   UserErrors = "error changing password"
+	ErrorDeletingUser       UserErrors = "error deleting user"
+	ErrorInvalidCredentials UserErrors = "invalid credentials"
 )
 
 func (s *Service) Register(name, email, password string) (*User, error) {
@@ -115,6 +116,21 @@ func (s *Service) DeleteUser(id string) error {
 	}
 
 	return nil
+
+}
+
+func (s *Service) Login(email, password string) (string, error) {
+	user, err := s.repo.FindByEmail(email)
+
+	if err != nil {
+		return "", errors.New(string(ErrorUserNotFound))
+	}
+
+	ok := CheckPassword(password, user.PasswordHash)
+
+	if !ok {
+		return "", errors.New(string(ErrorInvalidCredentials))
+	}
 
 }
 

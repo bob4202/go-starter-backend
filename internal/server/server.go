@@ -2,6 +2,7 @@ package server
 
 import (
 	"go-starter-backend/internal/config"
+	"go-starter-backend/internal/user"
 	"go-starter-backend/pkg/response"
 
 	"github.com/gin-gonic/gin"
@@ -24,6 +25,13 @@ func (s *Server) Routes() *gin.Engine {
 	router := gin.Default()
 
 	router.GET("/health", s.health)
+
+	userRepo := user.NewRepository(s.db)
+	userService := user.NewService(userRepo)
+	userHandler := user.NewHandler(userService)
+
+	api := router.Group("/api/v1")
+	user.RegisterRoutes(api, userHandler)
 
 	return router
 }
