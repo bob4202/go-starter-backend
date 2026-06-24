@@ -21,11 +21,8 @@ func Error(c *gin.Context, statusCode int, message string) {
 	})
 }
 
-func OK(c *gin.Context, statusCode int, data any) {
-	c.JSON(statusCode, gin.H{
-		"success": true,
-		"data":    data,
-	})
+func OK(c *gin.Context, message string, data any) {
+	Success(c, http.StatusOK, message, data)
 }
 
 func Created(c *gin.Context, message string, data any) {

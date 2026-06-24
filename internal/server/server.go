@@ -2,7 +2,7 @@ package server
 
 import (
 	"go-starter-backend/internal/config"
-	"net/http"
+	"go-starter-backend/pkg/response"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
@@ -29,7 +29,8 @@ func (s *Server) Routes() *gin.Engine {
 }
 
 func (s *Server) health(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
+
+	response.OK(c, "Server Healthy", gin.H{
 		"status": "ok",
 	})
 }
