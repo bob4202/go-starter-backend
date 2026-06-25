@@ -5,26 +5,30 @@ import (
 	"go-starter-backend/internal/middleware"
 	"go-starter-backend/internal/user"
 	"go-starter-backend/pkg/response"
+	"go-starter-backend/pkg/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 )
 
 type Server struct {
-	cfg *config.Config
-	db  *sqlx.DB
+	cfg     *config.Config
+	db      *sqlx.DB
+	storage *storage.Storage
 }
 
-func New(cfg *config.Config, db *sqlx.DB) *Server {
+func New(cfg *config.Config, db *sqlx.DB, storage *storage.Storage) *Server {
 	return &Server{
-		cfg: cfg,
-		db:  db,
+		cfg:     cfg,
+		db:      db,
+		storage: storage,
 	}
 }
 
 func (s *Server) Routes() *gin.Engine {
 	router := gin.Default()
 
+	router.Use(middleware.CORS())
 	router.GET("/health", s.health)
 
 	userRepo := user.NewRepository(s.db)

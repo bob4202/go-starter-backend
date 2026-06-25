@@ -5,6 +5,7 @@ import (
 	"go-starter-backend/internal/config"
 	"go-starter-backend/internal/db"
 	"go-starter-backend/internal/server"
+	"go-starter-backend/pkg/storage"
 	"log"
 )
 
@@ -20,7 +21,12 @@ func main() {
 
 	fmt.Println("DB connected successfully")
 
-	serv := server.New(cfg, db)
+	store, err := storage.New(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	serv := server.New(cfg, db, store)
 
 	err = serv.Routes().Run(":" + cfg.AppPort)
 	if err != nil {
