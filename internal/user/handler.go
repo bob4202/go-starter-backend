@@ -1,9 +1,10 @@
 package user
 
 import (
+	"go-starter-backend/pkg/appcommon"
+	"go-starter-backend/pkg/apperror"
 	"go-starter-backend/pkg/response"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,66 +13,27 @@ type Handler struct {
 	service *Service
 }
 
+type Messages string
+
+const (
+	UserRegisterSuccess   Messages = "user register successfully"
+	UserDeletedSuccess    Messages = "user deleted successfully"
+	UserNotFound          Messages = "user not found"
+	UserUpdateSuccess     Messages = "user update successfully"
+	PasswordUpdateSuccess Messages = "password update successfully"
+)
+
 func NewHandler(service *Service) *Handler {
 	return &Handler{
 		service: service,
 	}
 }
 
-type PublicUserResponse struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-}
-
-type PrivateUserResponse struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
-	CreatedAt time.Time `json:"created_at"`
-}
-type RegisterRequest struct {
-	Name     string `json:"name" binding:"required"`
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required,min=6"`
-}
-
-type UpdateRequest struct {
-	ID    string `json:"id" binding:"required"`
-	Name  string `json:"name" binding:"required"`
-	Email string `json:"email" binding:"required"`
-}
-
-type ChangePasswordRequest struct {
-	ID       string `json:"id" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
-
-type DeleteUserRequest struct {
-	ID string `json:"id" binding:"required"`
-}
-
-type GetUserByIDRequest struct {
-	ID string `json:"id" binding:"required"`
-}
-
-type GetUserByEmailRequest struct {
-	Email string `json:"email" binding:"required"`
-}
-
-type LoginRequest struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
-type LoginResponse struct {
-	Token string `json:"token"`
-}
-
 func (h *Handler) Register(c *gin.Context) {
 	var req RegisterRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "invalid request body")
+		response.BadRequest(c, apperror.ErrBadRequest.Error())
 	}
 
 	user, err := h.service.Register(req.Name, req.Email, req.Password)
@@ -79,14 +41,14 @@ func (h *Handler) Register(c *gin.Context) {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 	}
 
-	response.Created(c, "user register successfully", user)
+	response.Created(c, string(UserRegisterSuccess), user)
 }
 
 func (h *Handler) DeleteUser(c *gin.Context) {
 	var req DeleteUserRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "invalid request body")
+		response.BadRequest(c, apperror.ErrBadRequest.Error())
 	}
 
 	err := h.service.DeleteUser(req.ID)
@@ -95,29 +57,29 @@ func (h *Handler) DeleteUser(c *gin.Context) {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 	}
 
-	response.Success(c, http.StatusAccepted, "user deleted successfully", nil)
+	response.Success(c, http.StatusOK, string(UserDeletedSuccess), nil)
 }
 
 func (h *Handler) ChangePassword(c *gin.Context) {
 	var req ChangePasswordRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "invalid request body")
+		response.BadRequest(c, apperror.ErrBadRequest.Error())
 	}
 
-	userID := c.GetString("user_id")
+	userID := c.GetString(appcommon.UserID)
 
 	user, err := h.service.Me(userID)
 
 	if err != nil {
-		response.Error(c, http.StatusUnauthorized, "user not found")
+		response.Error(c, http.StatusNotFound, string(UserNotFound))
 	}
 	err = h.service.ChangePassword(user.ID, req.Password)
 
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 	}
-	response.Success(c, http.StatusAccepted, "update password successfully", nil)
+	response.Success(c, http.StatusOK, string(PasswordUpdateSuccess), nil)
 
 }
 
@@ -125,7 +87,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 	var req UpdateRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "invalid request body")
+		response.BadRequest(c, apperror.ErrBadRequest.Error())
 	}
 
 	user, err := h.service.UpdateUser(req.ID, req.Name, req.Email)
@@ -134,7 +96,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 	}
 
-	response.Success(c, http.StatusAccepted, "user update successfully", user)
+	response.Success(c, http.StatusOK, string(UserUpdateSuccess), user)
 
 }
 
@@ -143,7 +105,7 @@ func (h *Handler) GetUserById(c *gin.Context) {
 	var req GetUserByIDRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "invalid request body")
+		response.BadRequest(c, apperror.ErrBadRequest.Error())
 	}
 
 	user, err := h.service.GetUserByID(req.ID)
@@ -157,7 +119,7 @@ func (h *Handler) GetUserById(c *gin.Context) {
 		Email: user.Email,
 	}
 
-	response.Success(c, http.StatusAccepted, "success", res)
+	response.Success(c, http.StatusOK, string(appcommon.Success), res)
 }
 
 func (h *Handler) GetUserByEmail(c *gin.Context) {
@@ -165,7 +127,7 @@ func (h *Handler) GetUserByEmail(c *gin.Context) {
 	var req GetUserByEmailRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "invalid request body")
+		response.BadRequest(c, apperror.ErrBadRequest.Error())
 	}
 
 	user, err := h.service.GetUserByID(req.Email)
@@ -179,15 +141,15 @@ func (h *Handler) GetUserByEmail(c *gin.Context) {
 		Email: user.Email,
 	}
 
-	response.Success(c, http.StatusAccepted, "success", res)
+	response.Success(c, http.StatusOK, string(appcommon.Success), res)
 }
 func (h *Handler) Me(c *gin.Context) {
-	userID := c.GetString("user_id")
+	userID := c.GetString(appcommon.UserID)
 
 	user, err := h.service.Me(userID)
 
 	if err != nil {
-		response.Error(c, http.StatusUnauthorized, "user not found")
+		response.Error(c, http.StatusUnauthorized, string(UserNotFound))
 	}
 	res := PrivateUserResponse{
 		ID:        user.ID,
@@ -196,7 +158,7 @@ func (h *Handler) Me(c *gin.Context) {
 		CreatedAt: user.CreatedAt,
 	}
 
-	response.Success(c, http.StatusAccepted, "success", res)
+	response.Success(c, http.StatusOK, string(appcommon.Success), res)
 
 }
 func (h *Handler) Login(c *gin.Context) {
@@ -204,7 +166,7 @@ func (h *Handler) Login(c *gin.Context) {
 	var req LoginRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "invalid request body")
+		response.BadRequest(c, apperror.ErrBadRequest.Error())
 	}
 
 	token, err := h.service.Login(req.Email, req.Password)
@@ -216,5 +178,5 @@ func (h *Handler) Login(c *gin.Context) {
 		Token: token,
 	}
 
-	response.Success(c, http.StatusAccepted, "login successful", res)
+	response.Success(c, http.StatusOK, string(appcommon.Success), res)
 }
