@@ -5,5 +5,3 @@ type CommonMessages string
 const (
 	Success CommonMessages = "success"
 )
-
- fd:
